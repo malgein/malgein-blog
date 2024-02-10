@@ -67,49 +67,49 @@ export const signin = async (req, res, next) => {
   }
 };
 
-export const google = async (req, res, next) => {
-  const { email, name, googlePhotoUrl } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (user) {
-      const token = jwt.sign(
-        { id: user._id, isAdmin: user.isAdmin },
-        process.env.JWT_SECRET
+export const google = async (req, res, next) => { // Define una función llamada 'google' que maneja solicitudes, utilizada como controlador en Express.js
+  const { email, name, googlePhotoUrl } = req.body; // Extrae el correo electrónico, nombre y URL de la foto de Google de la solicitud
+  try { // Inicia un bloque de manejo de errores
+    const user = await User.findOne({ email }); // Busca un usuario en la base de datos con el correo electrónico proporcionado
+    if (user) { // Si el usuario existe
+      const token = jwt.sign( // Crea un token JWT
+        { id: user._id, isAdmin: user.isAdmin }, // Payload del token incluyendo el ID de usuario y su estado de administrador
+        process.env.JWT_SECRET // Utiliza la clave secreta JWT de entorno para firmar el token
       );
-      const { password, ...rest } = user._doc;
-      res
-        .status(200)
-        .cookie('access_token', token, {
-          httpOnly: true,
+      const { password, ...rest } = user._doc; // Extrae la contraseña del usuario y otros datos
+      res // Envía una respuesta al cliente
+        .status(200) // Establece el código de estado de la respuesta en 200 (OK)
+        .cookie('access_token', token, { // Establece una cookie llamada 'access_token' con el token JWT
+          httpOnly: true, // Marca la cookie como accesible solo mediante HTTP
         })
-        .json(rest);
-    } else {
-      const generatedPassword =
+        .json(rest); // Envía los datos del usuario (excepto la contraseña) como JSON en la respuesta
+    } else { // Si el usuario no existe
+      const generatedPassword = // Genera una contraseña aleatoria
         Math.random().toString(36).slice(-8) +
         Math.random().toString(36).slice(-8);
-      const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
-      const newUser = new User({
-        username:
+      const hashedPassword = bcryptjs.hashSync(generatedPassword, 10); // Genera un hash de la contraseña
+      const newUser = new User({ // Crea un nuevo usuario con los datos proporcionados
+        username: // Genera un nombre de usuario único combinando el nombre y números aleatorios
           name.toLowerCase().split(' ').join('') +
           Math.random().toString(9).slice(-4),
         email,
-        password: hashedPassword,
-        profilePicture: googlePhotoUrl,
+        password: hashedPassword, // Asigna la contraseña hasheada al nuevo usuario
+        profilePicture: googlePhotoUrl, // Asigna la URL de la foto de Google al nuevo usuario
       });
-      await newUser.save();
-      const token = jwt.sign(
-        { id: newUser._id, isAdmin: newUser.isAdmin },
-        process.env.JWT_SECRET
+      await newUser.save(); // Guarda el nuevo usuario en la base de datos
+      const token = jwt.sign( // Crea un token JWT para el nuevo usuario
+        { id: newUser._id, isAdmin: newUser.isAdmin }, // Payload del token incluyendo el ID de usuario y su estado de administrador
+        process.env.JWT_SECRET // Utiliza la clave secreta JWT de entorno para firmar el token
       );
-      const { password, ...rest } = newUser._doc;
-      res
-        .status(200)
-        .cookie('access_token', token, {
-          httpOnly: true,
+      const { password, ...rest } = newUser._doc; // Extrae la contraseña del nuevo usuario y otros datos
+      res // Envía una respuesta al cliente
+        .status(200) // Establece el código de estado de la respuesta en 200 (OK)
+        .cookie('access_token', token, { // Establece una cookie llamada 'access_token' con el token JWT
+          httpOnly: true, // Marca la cookie como accesible solo mediante HTTP
         })
-        .json(rest);
+        .json(rest); // Envía los datos del nuevo usuario (excepto la contraseña) como JSON en la respuesta
     }
-  } catch (error) {
-    next(error);
+  } catch (error) { // Captura cualquier error que ocurra en el bloque try
+    next(error); // Pasa el error al siguiente middleware para su manejo
   }
 };
